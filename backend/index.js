@@ -29,6 +29,42 @@ pool.connect((err, client, release) => {
   release();
 });
 
+// ========================================================
+// RUTA POST: Para guardar un nuevo sorteo en la base de datos
+// ========================================================
+app.post('/api/sorteos', async (req, res) => {
+  // Desestructuramos los datos que vendrán desde el formulario de React
+  const { tipo, b1, b2, b3, b4, b5, sb } = req.body;
+
+  // Validación rápida: Asegurarnos de que no falte ningún dato
+  if (!tipo || !b1 || !b2 || !b3 || !b4 || !b5 || !sb) {
+    return res.status(400).json({ error: "Faltan datos obligatorios del sorteo." });
+  }
+
+  try {
+    // Consulta SQL con parámetros ($1, $2...) para evitar hackeos (SQL Injection)
+    const queryText = `
+      INSERT INTO sorteos (tipo, b1, b2, b3, b4, b5, sb) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      RETURNING *;
+    `;
+    const values = [tipo, b1, b2, b3, b4, b5, sb];
+    
+    // Ejecutamos la consulta en Supabase
+    const resultado = await pool.query(queryText, values);
+    
+    // Si todo sale bien, respondemos al frontend con el registro guardado
+    res.status(201).json({
+      mensaje: "¡Sorteo guardado con éxito en Supabase!",
+      sorteo: resultado.rows[0]
+    });
+
+  } catch (error) {
+    console.error("❌ Error al insertar en la base de datos:", error);
+    res.status(500).json({ error: "Error interno del servidor al guardar el sorteo." });
+  }
+});
+
 // Ruta de prueba básica para verificar que el backend responda
 app.get('/', (req, res) => {
   res.send('Servidor de Baloto Analytics corriendo y conectado.');
