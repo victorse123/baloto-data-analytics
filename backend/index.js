@@ -66,8 +66,22 @@ app.post('/api/sorteos', async (req, res) => {
 });
 
 // Ruta de prueba básica para verificar que el backend responda
-app.get('/', (req, res) => {
-  res.send('Servidor de Baloto Analytics corriendo y conectado.');
+// app.get('/', (req, res) => {
+//   res.send('Servidor de Baloto Analytics corriendo y conectado.');
+// });
+
+// NUEVA RUTA: Obtener todos los sorteos guardados
+app.get('/api/sorteos', async (req, res) => {
+  try {
+    // Hacemos una consulta SQL para traer los sorteos ordenados por el más reciente
+    const resultado = await pool.query('SELECT * FROM sorteos ORDER BY id DESC');
+    
+    // Le respondemos al frontend con la lista de sorteos en formato JSON
+    res.json(resultado.rows);
+  } catch (error) {
+    console.error('Error al obtener los sorteos:', error);
+    res.status(500).json({ error: 'Error interno del servidor al consultar los datos' });
+  }
 });
 
 // El puerto ahora lo lee del .env (5000)
