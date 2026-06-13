@@ -84,6 +84,131 @@ app.get('/api/sorteos', async (req, res) => {
   }
 });
 
+// NUEVA RUTA: Calcular la frecuencia de los números calientes
+app.get('/api/analitica/frecuencias', async (req, res) => {
+  try {
+    // 1. Traemos todos los sorteos de la base de datos
+    const resultado = await pool.query('SELECT b1, b2, b3, b4, b5 FROM sorteos');
+    const sorteos = resultado.rows;
+
+    // 2. Creamos un objeto para llevar el conteo (del 1 al 43)
+    // Inicializamos todos los números en 0 apariciones
+    const conteo = {};
+    for (let i = 1; i <= 43; i++) {
+      conteo[i] = 0;
+    }
+
+    // 3. Recorremos cada sorteo y sumamos las apariciones de cada balota
+    sorteos.forEach(sorteo => {
+      if (sorteo.b1) conteo[sorteo.b1]++;
+      if (sorteo.b2) conteo[sorteo.b2]++;
+      if (sorteo.b3) conteo[sorteo.b3]++;
+      if (sorteo.b4) conteo[sorteo.b4]++;
+      if (sorteo.b5) conteo[sorteo.b5]++;
+    });
+
+    // 4. Convertimos el objeto en una lista ordenada de mayor a menor frecuencia
+    const frecuenciasOrdenadas = Object.keys(conteo)
+      .map(numero => ({
+        numero: parseInt(numero),
+        frecuencia: conteo[numero]
+      }))
+      .sort((a, b) => b.frecuencia - a.frecuencia); // Ordena de mayor a menor
+
+    // 5. Enviamos el resultado al frontend
+    res.json(frecuenciasOrdenadas);
+
+  } catch (error) {
+    console.error('Error al calcular frecuencias:', error);
+    res.status(500).json({ error: 'Error interno al procesar la analítica' });
+  }
+});
+
+// NUEVA RUTA: Calcular los números fríos (ausencias consecutivas)
+app.get('/api/analitica/frios', async (req, res) => {
+  try {
+    // 1. Traemos todos los sorteos ordenados del más reciente al más antiguo
+    // (Asumiendo que tienes una columna 'id' autoincremental o 'fecha')
+    const resultado = await pool.query('SELECT b1, b2, b3, b4, b5 FROM sorteos ORDER BY id DESC');
+    const sorteos = resultado.rows;
+
+    // 2. Creamos el mapa para registrar cuántos sorteos llevan sin salir
+    const ausencias = {};
+    for (let i = 1; i <= 43; i++) {
+      ausencias[i] = 0;
+    }
+
+    // Conjunto para marcar los números que YA encontramos en el viaje hacia atrás
+    const encontrados = new Set();
+
+    // 3. Recorremos los sorteos desde el más nuevo hacia el pasado
+    sorteos.forEach((sorteo, index) => {
+      const numerosDelSorteo = [sorteo.b1, sorteo.b2, sorteo.b3, sorteo.b4, sorteo.b5];
+
+      for (let i = 1; i <= 43; i++) {
+        // Si el número NO está en este sorteo y TAMPOCO ha salido en los más nuevos...
+        if (!numerosDelSorteo.includes(i) && !encontrados.has(i)) {
+          ausencias[i]++;
+        } else if (numerosDelSorteo.includes(i)) {
+          // Si el número sale en este sorteo, lo marcamos como encontrado
+          // para que no siga sumando ausencias en sorteos más viejos
+          encontrados.add(i);
+        }
+      }
+    });
+
+    // 4. Convertimos a un arreglo ordenado de MAYOR a MENOR ausencia
+    const friosOrdenados = Object.keys(ausencias)
+      .map(numero => ({
+        numero: parseInt(numero),
+        ausencias: ausencias[numero]
+      }))
+      .sort((a, b) => b.ausencias - a.ausencias); // Los que más llevan sin salir van primero
+
+    res.json(friosOrdenados);
+
+  } catch (error) {
+    console.error('Error al calcular números fríos:', error);
+    res.status(500).json({ error: 'Error al procesar los números fríos' });
+  }
+});
+
+// NUEVA RUTA: Calcular la frecuencia de la Súper Balota (SB)
+app.get('/api/analitica/superbalota', async (req, res) => {
+  try {
+    // 1. Traemos solo la columna sb de la base de datos
+    const resultado = await pool.query('SELECT sb FROM sorteos');
+    const sorteos = resultado.rows;
+
+    // 2. Creamos el contador exclusivo del 1 al 16
+    const conteoSB = {};
+    for (let i = 1; i <= 16; i++) {
+      conteoSB[i] = 0;
+    }
+
+    // 3. Contamos las apariciones de la Súper Balota
+    sorteos.forEach(sorteo => {
+      if (sorteo.sb) {
+        conteoSB[sorteo.sb]++;
+      }
+    });
+
+    // 4. Convertimos a un arreglo ordenado de mayor a menor frecuencia
+    const frecuenciasSB = Object.keys(conteoSB)
+      .map(numero => ({
+        numero: parseInt(numero),
+        frecuencia: conteoSB[numero]
+      }))
+      .sort((a, b) => b.frecuencia - a.frecuencia);
+
+    res.json(frecuenciasSB);
+
+  } catch (error) {
+    console.error('Error al calcular analítica de SB:', error);
+    res.status(500).json({ error: 'Error al procesar la analítica de Súper Balota' });
+  }
+});
+
 // El puerto ahora lo lee del .env (5000)
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

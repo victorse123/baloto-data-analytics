@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import './App.css'; // O los estilos que ya tengas
-import { HistorialSorteos } from './components/HistorialSorteos'; // <-- IMPORTAMOS EL COMPONENTE
+import './App.css'; 
+import { HistorialSorteos } from './components/HistorialSorteos'; 
+import { AnaliticaSorteos } from './components/AnaliticaSorteos';
+import { AnaliticaFrios } from './components/AnaliticaFrios';
+import { AnaliticaSB } from './components/AnaliticaSB'; // <-- 1. IMPORTAMOS LA ANALÍTICA DE LA SÚPER BALOTA
 
 function App() {
-  // 1. Estado para controlar los campos del formulario
   const [formData, setFormData] = useState({
     tipo: 'Tradicional',
     b1: '',
@@ -14,29 +16,20 @@ function App() {
     sb: ''
   });
 
-  // Estados para manejar mensajes de éxito o error en la pantalla
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
-
-  // SENSOR DE AUTO-REFRESCO: Estado para avisarle al historial que se guardó un sorteo
   const [actualizarHistorial, setActualizarHistorial] = useState(false);
 
-  // 2. Función para actualizar el estado cuando el usuario escribe
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
-  // 3. Función para enviar los datos al backend al hacer clic en "Guardar"
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('');
     setError('');
 
-    // Convertimos las balotas a números enteros antes de enviarlas
     const datosAEnviar = {
       tipo: formData.tipo,
       b1: parseInt(formData.b1),
@@ -48,12 +41,9 @@ function App() {
     };
 
     try {
-      // Hacemos la petición POST a nuestro servidor Node.js (Puerto 5000)
       const respuesta = await fetch('http://localhost:5000/api/sorteos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosAEnviar)
       });
 
@@ -61,26 +51,14 @@ function App() {
 
       if (respuesta.ok) {
         setMensaje(`✅ ${resultado.mensaje}`);
-        
-        // ¡ACTUALIZAMOS EL HISTORIAL ACÁ! Cambiamos el switch para forzar el re-render
         setActualizarHistorial(prev => !prev);
-
-        // Limpiamos los campos de los números tras guardar con éxito
-        setFormData({
-          tipo: 'Tradicional',
-          b1: '',
-          b2: '',
-          b3: '',
-          b4: '',
-          b5: '',
-          sb: ''
-        });
+        setFormData({ tipo: 'Tradicional', b1: '', b2: '', b3: '', b4: '', b5: '', sb: '' });
       } else {
         setError(`❌ Error: ${resultado.error}`);
       }
     } catch (err) {
       console.error(err);
-      setError('❌ No se pudo conectar con el servidor backend. ¿Está encendido?');
+      setError('❌ No se pudo conectar con el servidor backend.');
     }
   };
 
@@ -88,12 +66,10 @@ function App() {
     <div className="container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
       <h2>Registrar Sorteo Baloto</h2>
       
-      {/* Alertas en pantalla */}
       {mensaje && <div style={{ color: 'green', marginBottom: '15px', fontWeight: 'bold' }}>{mensaje}</div>}
       {error && <div style={{ color: 'red', marginBottom: '15px', fontWeight: 'bold' }}>{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        {/* Selector de Tipo */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>Tipo de Sorteo:</label>
           <select name="tipo" value={formData.tipo} onChange={handleChange} style={{ width: '100%', padding: '8px' }}>
@@ -102,7 +78,6 @@ function App() {
           </select>
         </div>
 
-        {/* Fila de Balotas */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>Balotas (1 al 43):</label>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -114,7 +89,6 @@ function App() {
           </div>
         </div>
 
-        {/* Súper Balota */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>Súper Balota (1 al 16):</label>
           <input type="number" name="sb" min="1" max="16" required value={formData.sb} onChange={handleChange} style={{ width: '60px', padding: '8px', textAlign: 'center', border: '2px solid #e74c3c', borderRadius: '4px' }} />
@@ -125,9 +99,17 @@ function App() {
         </button>
       </form>
 
-      {/* RENDERIZAMOS EL HISTORIAL ABAJO DEL FORMULARIO */}
-      {/* Le pasamos el estado como prop para que sepa cuándo disparar el useEffect */}
+      {/* HISTORIAL */}
       <HistorialSorteos nuevoSorteoAgregado={actualizarHistorial} />
+      
+      {/* NÚMEROS CALIENTES 🔥 */}
+      <AnaliticaSorteos nuevoSorteoAgregado={actualizarHistorial} />
+
+      {/* NÚMEROS FRÍOS ❄️ */}
+      <AnaliticaFrios nuevoSorteoAgregado={actualizarHistorial} />
+
+      {/* SÚPER BALOTA 🔴 */}
+      <AnaliticaSB nuevoSorteoAgregado={actualizarHistorial} />
       
     </div>
   );
