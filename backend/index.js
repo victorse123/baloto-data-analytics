@@ -29,39 +29,73 @@ pool.connect((err, client, release) => {
   release();
 });
 
-// ========================================================
-// RUTA POST: Para guardar un nuevo sorteo en la base de datos
-// ========================================================
+// // ========================================================
+// // RUTA POST: Para guardar un nuevo sorteo en la base de datos
+// // ========================================================
+// app.post('/api/sorteos', async (req, res) => {
+//   // Desestructuramos los datos que vendrán desde el formulario de React
+//   const { tipo, b1, b2, b3, b4, b5, sb } = req.body;
+
+//   // Validación rápida: Asegurarnos de que no falte ningún dato
+//   if (!tipo || !b1 || !b2 || !b3 || !b4 || !b5 || !sb) {
+//     return res.status(400).json({ error: "Faltan datos obligatorios del sorteo." });
+//   }
+
+//   try {
+//     // Consulta SQL con parámetros ($1, $2...) para evitar hackeos (SQL Injection)
+//     const queryText = `
+//       INSERT INTO sorteos (tipo, b1, b2, b3, b4, b5, sb) 
+//       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+//       RETURNING *;
+//     `;
+//     const values = [tipo, b1, b2, b3, b4, b5, sb];
+    
+//     // Ejecutamos la consulta en Supabase
+//     const resultado = await pool.query(queryText, values);
+    
+//     // Si todo sale bien, respondemos al frontend con el registro guardado
+//     res.status(201).json({
+//       mensaje: "¡Sorteo guardado con éxito en Supabase!",
+//       sorteo: resultado.rows[0]
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Error al insertar en la base de datos:", error);
+//     res.status(500).json({ error: "Error interno del servidor al guardar el sorteo." });
+//   }
+// });
+
+// MODIFICADO: Guardar un sorteo incluyendo la fecha
 app.post('/api/sorteos', async (req, res) => {
-  // Desestructuramos los datos que vendrán desde el formulario de React
-  const { tipo, b1, b2, b3, b4, b5, sb } = req.body;
-
-  // Validación rápida: Asegurarnos de que no falte ningún dato
-  if (!tipo || !b1 || !b2 || !b3 || !b4 || !b5 || !sb) {
-    return res.status(400).json({ error: "Faltan datos obligatorios del sorteo." });
-  }
-
   try {
-    // Consulta SQL con parámetros ($1, $2...) para evitar hackeos (SQL Injection)
-    const queryText = `
-      INSERT INTO sorteos (tipo, b1, b2, b3, b4, b5, sb) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7) 
-      RETURNING *;
+    // 1. Recibimos la fecha junto a las balotas desde el frontend
+    const { tipo, b1, b2, b3, b4, b5, sb, fecha } = req.body;
+
+    // Validación simple por si acaso
+    if (!fecha) {
+      return res.status(400).json({ error: 'La fecha es obligatoria' });
+    }
+
+    // 2. Agregamos 'fecha' tanto en las columnas como en los VALUES ($8)
+    const consulta = `
+      INSERT INTO sorteos (tipo, b1, b2, b3, b4, b5, sb, fecha) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+      RETURNING *
     `;
-    const values = [tipo, b1, b2, b3, b4, b5, sb];
     
-    // Ejecutamos la consulta en Supabase
-    const resultado = await pool.query(queryText, values);
-    
-    // Si todo sale bien, respondemos al frontend con el registro guardado
-    res.status(201).json({
-      mensaje: "¡Sorteo guardado con éxito en Supabase!",
-      sorteo: resultado.rows[0]
+    // El orden de los elementos en este arreglo debe coincidir exactamente con los $1, $2...
+    const valores = [tipo, b1, b2, b3, b4, b5, sb, fecha];
+
+    const nuevoSorteo = await pool.query(consulta, valores);
+
+    res.json({ 
+      mensaje: 'Sorteo registrado con éxito en la base de datos', 
+      sorteo: nuevoSorteo.rows[0] 
     });
 
   } catch (error) {
-    console.error("❌ Error al insertar en la base de datos:", error);
-    res.status(500).json({ error: "Error interno del servidor al guardar el sorteo." });
+    console.error('Error al insertar sorteo:', error);
+    res.status(500).json({ error: 'Error interno del servidor al guardar' });
   }
 });
 
@@ -71,16 +105,27 @@ app.post('/api/sorteos', async (req, res) => {
 // });
 
 // NUEVA RUTA: Obtener todos los sorteos guardados
+// app.get('/api/sorteos', async (req, res) => {
+//   try {
+//     // Hacemos una consulta SQL para traer los sorteos ordenados por el más reciente
+//     const resultado = await pool.query('SELECT * FROM sorteos ORDER BY id DESC');
+    
+//     // Le respondemos al frontend con la lista de sorteos en formato JSON
+//     res.json(resultado.rows);
+//   } catch (error) {
+//     console.error('Error al obtener los sorteos:', error);
+//     res.status(500).json({ error: 'Error interno del servidor al consultar los datos' });
+//   }
+// });
+
 app.get('/api/sorteos', async (req, res) => {
   try {
-    // Hacemos una consulta SQL para traer los sorteos ordenados por el más reciente
-    const resultado = await pool.query('SELECT * FROM sorteos ORDER BY id DESC');
-    
-    // Le respondemos al frontend con la lista de sorteos en formato JSON
+    // Ordenamos por fecha de forma descendente (el más nuevo primero)
+    const resultado = await pool.query('SELECT id, tipo, b1, b2, b3, b4, b5, sb, fecha FROM sorteos ORDER BY fecha DESC, id DESC');
     res.json(resultado.rows);
   } catch (error) {
-    console.error('Error al obtener los sorteos:', error);
-    res.status(500).json({ error: 'Error interno del servidor al consultar los datos' });
+    console.error('Error al obtener sorteos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -129,7 +174,7 @@ app.get('/api/analitica/frios', async (req, res) => {
   try {
     // 1. Traemos todos los sorteos ordenados del más reciente al más antiguo
     // (Asumiendo que tienes una columna 'id' autoincremental o 'fecha')
-    const resultado = await pool.query('SELECT b1, b2, b3, b4, b5 FROM sorteos ORDER BY id DESC');
+    const resultado = await pool.query('SELECT b1, b2, b3, b4, b5 FROM sorteos ORDER BY fecha DESC');
     const sorteos = resultado.rows;
 
     // 2. Creamos el mapa para registrar cuántos sorteos llevan sin salir
