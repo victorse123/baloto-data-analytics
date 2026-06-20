@@ -4,6 +4,8 @@ import { HistorialSorteos } from './components/HistorialSorteos';
 import { AnaliticaSorteos } from './components/AnaliticaSorteos';
 import { AnaliticaFrios } from './components/AnaliticaFrios';
 import { AnaliticaSB } from './components/AnaliticaSB';
+// 1. IMPORTAMOS EL NUEVO EMULADOR
+import { EmuladorJuego } from './components/EmuladorJuego';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -21,7 +23,7 @@ function App() {
   const [error, setError] = useState('');
   const [actualizarHistorial, setActualizarHistorial] = useState(false);
 
-  // NUEVO: Estado global para saber qué estadísticas estamos viendo
+  // Estado global para saber qué estadísticas estamos viendo
   const [filtro, setFiltro] = useState('Todos');
 
   const refB1 = useRef(null);
@@ -32,22 +34,6 @@ function App() {
   const refSB = useRef(null);
   const refBoton = useRef(null);
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setFormData({ ...formData, [name]: value });
-
-  //   if (value.length >= 1) {
-  //     const num = parseInt(value);
-  //     if (value.length === 2 || num >= 4) {
-  //       if (name === 'b1') refB2.current.focus();
-  //       if (name === 'b2') refB3.current.focus();
-  //       if (name === 'b3') refB4.current.focus();
-  //       if (name === 'b4') refB5.current.focus();
-  //       if (name === 'b5') refSB.current.focus();
-  //     }
-  //   }
-  // };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -57,7 +43,6 @@ function App() {
       const num = parseInt(value);
       
       // REGLA: Salta si tiene 2 dígitos O si es un número del 5 al 9.
-      // El 4 ya no salta solo, esperando a que decidas si es un 4 o un 40, 41, 42, 43.
       if (value.length === 2 || (num >= 5 && num <= 9)) {
         if (name === 'b1') refB2.current.focus();
         if (name === 'b2') refB3.current.focus();
@@ -157,9 +142,15 @@ function App() {
       {/* HISTORIAL GENERAL */}
       <HistorialSorteos nuevoSorteoAgregado={actualizarHistorial} />
       
+      {/* 2. UBICACIÓN ESTRATÉGICA PARA EL EMULADOR */}
+      <hr style={{ margin: '40px 0 30px 0', border: '0', borderTop: '2px dashed #3498db' }} />
+      <div style={{ marginLeft: '-50px', marginRight: '-50px' }}> {/* Rompe levemente el contenedor para darle más aire al simulador */}
+        <EmuladorJuego />
+      </div>
+
       <hr style={{ margin: '40px 0 20px 0', border: '0', borderTop: '2px dashed #ccc' }} />
 
-      {/* NUEVO: BARRA DE FILTROS PARA ANALÍTICA */}
+      {/* BARRA DE FILTROS PARA ANALÍTICA */}
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
         <h3>📊 Filtro Estadístico</h3>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
@@ -184,7 +175,7 @@ function App() {
         </div>
       </div>
 
-      {/* PASAMOS EL FILTRO COMO PROP A CADA COMPONENTE */}
+      {/* ANALÍTICA */}
       <AnaliticaSorteos nuevoSorteoAgregado={actualizarHistorial} filtro={filtro} />
       <AnaliticaFrios nuevoSorteoAgregado={actualizarHistorial} filtro={filtro} />
       <AnaliticaSB nuevoSorteoAgregado={actualizarHistorial} filtro={filtro} />
