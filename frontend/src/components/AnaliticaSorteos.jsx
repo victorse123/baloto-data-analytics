@@ -33,3 +33,4 @@ export const AnaliticaSorteos = ({ nuevoSorteoAgregado, filtro }) => {
     </div>
   );
 };
+
