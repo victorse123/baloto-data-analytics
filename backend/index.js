@@ -289,6 +289,7 @@ app.get('/api/estadisticas-emulador', async (req, res) => {
       if (!sbFrias.includes(num) && sbFrias.length < 4) sbFrias.push(num);
     });
 
+    
     // =========================================================================
     // IMPLEMENTACIÓN DE ALEATORIEDAD (UX MEJORADA)
     // Tomamos los primeros 10 del historial y los desordenamos aleatoriamente
