@@ -29,7 +29,6 @@ pool.connect((err, client, release) => {
   release();
 });
 
-
 // GUARDAR UN SORTEO (Incluyendo la fecha)
 app.post('/api/sorteos', async (req, res) => {
   try {
@@ -59,7 +58,6 @@ app.post('/api/sorteos', async (req, res) => {
   }
 });
 
-
 // OBTENER HISTORIAL DE SORTEOS
 app.get('/api/sorteos', async (req, res) => {
   try {
@@ -70,7 +68,6 @@ app.get('/api/sorteos', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
-
 
 // Calcular frecuencias con filtro opcional (?tipo=Tradicional o ?tipo=Revancha)
 app.get('/api/analitica/frecuencias', async (req, res) => {
@@ -291,7 +288,6 @@ app.get('/api/estadisticas-emulador', async (req, res) => {
       if (!sbFrias.includes(num) && sbFrias.length < 4) sbFrias.push(num);
     });
 
-    
     // =========================================================================
     // IMPLEMENTACIÓN DE ALEATORIEDAD (UX MEJORADA)
     // Tomamos los primeros 10 del historial y los desordenamos aleatoriamente
