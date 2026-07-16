@@ -340,6 +340,8 @@ process.on('uncaughtException', (err) => {
   console.log("=======================================================\n");
 });
 
+
+
 process.on('unhandledRejection', (reason, promise) => {
   console.log("\n=======================================================");
   console.log("🛑 ¡PROMESA ROTA DETECTADA!");
