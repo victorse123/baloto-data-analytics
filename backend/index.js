@@ -351,18 +351,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
 
 
-
-// --- CONGELADOR DE ERRORES CRÍTICOS ---
-process.on('uncaughtException', (err) => {
-  console.log("\n=======================================================");
-  console.log("🛑 ¡CAPTURADO ERROR CRÍTICO ANTES DE QUE SE CAIGA!");
-  console.log("Mensaje del error:", err.message);
-  console.log("Línea exacta del fallo:\n", err.stack);
-  console.log("=======================================================\n");
-});
-
-
-
 process.on('unhandledRejection', (reason, promise) => {
   console.log("\n=======================================================");
   console.log("🛑 ¡PROMESA ROTA DETECTADA!");
