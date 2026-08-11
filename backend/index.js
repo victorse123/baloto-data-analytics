@@ -348,12 +348,3 @@ process.on('unhandledRejection', (reason, promise) => {
   console.log("Razón del fallo:", reason);
   console.log("=======================================================\n");
 });
-
-
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.log("\n=======================================================");
-  console.log("🛑 ¡PROMESA ROTA DETECTADA!");
-  console.log("Razón del fallo:", reason);
-  console.log("=======================================================\n");
-});
