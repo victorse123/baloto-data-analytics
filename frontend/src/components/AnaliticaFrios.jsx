@@ -34,3 +34,6 @@ export const AnaliticaFrios = ({ nuevoSorteoAgregado, filtro }) => {
     </div>
   );
 };
+
+
+
